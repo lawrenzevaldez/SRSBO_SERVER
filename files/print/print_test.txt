@@ -1,0 +1,19 @@
+RETURNS and DISPOSAL MANGGAHAN
+Return to Supplier Slip 
+No 52
+Supplier: ALASKA MILK CORPORATION
+Date: 2019/08/29 
+U.COST 
+Product                                 QTY
+ALASKA EVAPORADA 370ML                   3 
+77.12
+PC
+-------------------------------------------
+               TOTAL QTY: 3
+           TOTAL AMOUNT: 77.12
+-------------------------------------------
+Prepared by:DON JOHNSON ONILONGO
+Checked  by:DON JOHNSON ONILONGO
+Received by: 
+___________________________________________
+            *** Warehouse Copy *** 
