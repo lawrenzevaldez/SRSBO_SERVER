@@ -26,7 +26,7 @@ class RsController {
             throw new CustomException({ message: "Barcode is required" }, 401)
         }
 
-        if (p_qty == null || p_qty < 1) {
+        if (p_qty == null || p_qty < 0) {
             throw new CustomException({ message: "Quantity is required OR Quantity must be greater than 1" }, 401)
         }
 
@@ -68,7 +68,7 @@ class RsController {
             uom      = arr_uom[0]
         }
 
-        let cost_fixed = parseFloat(total_cost) + Math.abs(multip_)
+        let cost_fixed = parseFloat(total_cost) * Math.abs(multip_)
         let cost       = cost_fixed.toFixed(4)
 
         let rs_id      = await RsMod.fetch_rs_id(vendor_code, 0) //fetch rs id pending
