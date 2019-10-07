@@ -123,7 +123,7 @@ class InquiryRs extends Model {
             if(rs_action == 2) {
                 let datas = {
                     movement_type: 'FDFB',
-                    bo_processed_date: this.Today,
+                    bo_processed_date: moment().format(TO_DATE),
                     processed: '1',
                     processed_by: '2',
                     pending: '1'

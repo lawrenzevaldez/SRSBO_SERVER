@@ -625,7 +625,7 @@ class RsMod extends Model {
         let data = {
             movement_type: movementType,
             movement_no: movementField,
-            bo_processed_date: this.TodayTime,
+            bo_processed_date: moment().format(TO_DATE),
             rs_action : rsAction,
             comment: trim(comment),
             processed: 1,
@@ -656,7 +656,7 @@ class RsMod extends Model {
                 processed: 1,
                 comment: trim(comment),
                 pending: 1,
-                bo_processed_date: this.TodayTime,
+                bo_processed_date: moment().format(TO_DATE),
                 processed_by: currentUser
             }
             let row = await trx.table('0_rms_header')
