@@ -116,7 +116,7 @@ class InquiryRs extends Model {
     }
 
 
-    async updateRmsHeader(deliveryName, plateNumber, rs_id, /*file,*/ currentUser, rs_action) {
+    async updateRmsHeader(deliveryName, plateNumber, rs_id, file, currentUser, rs_action) {
         const trx = await Db.beginTransaction()
         try
         {
@@ -157,7 +157,6 @@ class InquiryRs extends Model {
                     
                     if(row) 
                         await trx.commit()
-						return true
 
                     // if(row) {
                     //     let row = await trx.table('0_rms_header')

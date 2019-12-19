@@ -409,26 +409,29 @@ class RsMod extends Model {
 				let oldStock =  prodRow.StockRoom + prodRow.SellingArea + prodRow.Damaged
 				let oldStockCos = oldStock * prodRow.CostOfSales
                 let newCos = prodRow.CostOfSales
-                
+
                 if(oldStock-Math.abs(pcsQty) != 0) {
                     let oldStockCosExt = oldStockCos - extended.toFixed(4)
                     let newCo = (oldStockCosExt/(oldStock-Math.abs(pcsQty)))
-                    newCos = newCo.toFixed(4)
+                    if(newCo < 0) 
+                        newCos = newCos
+                    else
+                        newCos = newCo.toFixed(4)
                     prodSql = `UPDATE Products SET  SellingArea = SellingArea - ${pcsQty}, CostOfSales =  ${newCos}  WHERE ProductID = ${row.prod_id}`
                 } else {
                     prodSql = `UPDATE Products SET SellingArea = SellingArea - ${pcsQty} WHERE ProductID = ${row.prod_id}`
                 }
-                }
+            }
                 
-                if(movementCode == 'FDFB') {
-                    await trx //MSSQL
-                    .table('Movements')
-                    .where('movementid', movementId)
-                    .andWhere('movementcode', movementCode)
-                    .update('nettotal', cosTotal)
-                }
+            if(movementCode == 'FDFB') {
+                await trx //MSSQL
+                .table('Movements')
+                .where('movementid', movementId)
+                .andWhere('movementcode', movementCode)
+                .update('nettotal', cosTotal)
+            }
 
-                await trx.raw(prodSql)
+            await trx.raw(prodSql)
         }
         console.log("Movement no. " + movementNo)
         return movementNo
