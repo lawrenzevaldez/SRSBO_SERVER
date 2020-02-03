@@ -1,19 +1,28 @@
-RETURNS and DISPOSAL NOVALICHES
+RETURNS and DISPOSAL NAVOTAS
 Return to Supplier Slip 
-No 146022
-Supplier: JUST CALL INC.
-Date: 2019/11/20 
+No 38425
+Supplier: FULL BACK UP TRADING CORP (CHAMPION)
+Date: 2020/01/13 
 U.COST 
 Product                                 QTY
-MILO LIGHT DRINK 200ML                   150 
-3,544.80
+CALLAPWDFLORALFRESH100G                  8 
+74.95
+PC
+CALLAPWDRFLORALFRESH45G                  6 
+26.48
+PC
+CHAMPION PWDR REG 120G                   4 
+49.55
+PC
+CHAMPION PWDR SFRESH120G                 1 
+12.39
 PC
 -------------------------------------------
-               TOTAL QTY: 150
-           TOTAL AMOUNT: 3,544.80
+               TOTAL QTY: 19
+           TOTAL AMOUNT: 163.38
 -------------------------------------------
-Prepared by:ADMINISTRATOR
-Checked  by:ADMINISTRATOR
+Prepared by:ARIS LACHICA
+Checked  by:ARIS LACHICA
 Received by: 
 ___________________________________________
-            *** Supplier's Copy *** 
+            *** Warehouse Copy *** 

@@ -25,7 +25,7 @@ class RsMod extends Model {
         super()
         this.Today = moment().format('YYYY-MM-DD');
         this.TodayTime = moment().format('YYYY-MM-DD HH:mm:ss');
-        this.branchCode = Env.get('BRANCH_CODE', '')
+		this.branchCode = Env.get('BRANCH_CODE', '')
 		this.branchName = Env.get('BRANCH_NAME', '')
     }
 
@@ -164,18 +164,29 @@ class RsMod extends Model {
                     rs_date: moment().format(TO_DATE),
                     supplier_code: vendorcode,
                     rs_action: rs_row.ttype,
+					bo_processed_date: moment().format(TO_DATE),
                     created_by: user_id,
                     supplier_name: vendor_name
                 }
 
                 let result = await Db.insert(data)
                                      .into('0_rms_header')
-                let rs_id = result[0]
+                
+                
+                let [roWresult] = await Db.raw('SELECT MAX(rs_id) as rs_id FROM 0_rms_items')
+                let rs_id = roWresult[0].rs_id+1
+                console.log(rs_id)
                 // update rs_id in rs_items
                 await Db.table('0_rms_items')
                                      .where('rs_id', 0)
                                      .andWhere('supplier_code', vendorcode)
                                      .update('rs_id', rs_id)
+
+                await Db.table('0_rms_header')
+                .where('rs_id', result[0])
+                .andWhere('supplier_code', vendorcode)
+                .andWhere('pending', 0)
+                .update('rs_id', rs_id)
             } else {
                 
                 return await Db.table('0_rms_items')
@@ -254,7 +265,7 @@ class RsMod extends Model {
         {
             let row = await Db.select("*")
                               .from('0_rms_header')
-                              .where({'supplier_code': vendorCode, 'supplier_pending': 0, 'pending': 0})
+                              .where({'supplier_code': vendorCode, 'supplier_pending': 0, 'pending': 0, 'approved': 0})
                               .orderBy('supplier_code', 'desc')
             vendor_code.push(row[0])
         }
@@ -409,20 +420,17 @@ class RsMod extends Model {
 				let oldStock =  prodRow.StockRoom + prodRow.SellingArea + prodRow.Damaged
 				let oldStockCos = oldStock * prodRow.CostOfSales
                 let newCos = prodRow.CostOfSales
-
+                
                 if(oldStock-Math.abs(pcsQty) != 0) {
                     let oldStockCosExt = oldStockCos - extended.toFixed(4)
                     let newCo = (oldStockCosExt/(oldStock-Math.abs(pcsQty)))
-                    if(newCo < 0) 
-                        newCos = newCos
-                    else
-                        newCos = newCo.toFixed(4)
+                    newCos = newCo.toFixed(4)
                     prodSql = `UPDATE Products SET  SellingArea = SellingArea - ${pcsQty}, CostOfSales =  ${newCos}  WHERE ProductID = ${row.prod_id}`
                 } else {
                     prodSql = `UPDATE Products SET SellingArea = SellingArea - ${pcsQty} WHERE ProductID = ${row.prod_id}`
                 }
             }
-                
+
             if(movementCode == 'FDFB') {
                 await trx //MSSQL
                 .table('Movements')

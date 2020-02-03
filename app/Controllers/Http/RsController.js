@@ -46,8 +46,6 @@ class RsController {
         let description = pos_product[0].description
         let uom         = pos_product[0].uom
         let qtys        = pos_product[0].qty
-
-        // PRODUCT ID CHCECKING OF SELLINGAREA IF NEGATIVE
         
         let vendor      = await RsMod.fetch_vendor(productid)
         let vendor_code = vendor.vendorcode
@@ -73,21 +71,20 @@ class RsController {
 
         let rs_id      = await RsMod.fetch_rs_id(vendor_code, 0) //fetch rs id pending
         let rs_qty     = await RsMod.fetch_rs_qty_items(p_barcode, uom,  rs_id)
-        
-        // let pcsQty     = parseFloat(qtys) * parseFloat(p_qty)
-        // let product_sellingArea = await PosProductMod.fetch_product_selling_area(productid)
 
-        // if(pcsQty <= product_sellingArea[0].SellingArea) {
-        //     if(!product_sellingArea[0]) {
-        //         await RsMod.saveAuditTrail(user_id, product_sellingArea[1])
-        //         throw new CustomException({ message: product_sellingArea[1] }, 401)
-        //     }
-        // } else{
-        //     let description = `${p_barcode} OR ${pos_product[0].description} is currently negative.`
-        //     await RsMod.saveAuditTrail(user_id, description)
-        //     throw new CustomException({ message: description }, 401)
-        // }
+        let pcsQty     = parseFloat(qtys) * parseFloat(p_qty)
+        let product_sellingArea = await PosProductMod.fetch_product_selling_area(productid)
 
+        if(pcsQty <= product_sellingArea[0].SellingArea) {
+            if(!product_sellingArea[0]) {
+                await RsMod.saveAuditTrail(user_id, product_sellingArea[1])
+                throw new CustomException({ message: product_sellingArea[1] }, 401)
+            }
+        } else{
+            let description = `${p_barcode} OR ${pos_product[0].description} is currently negative.`
+            await RsMod.saveAuditTrail(user_id, description)
+            throw new CustomException({ message: description }, 401)
+        }
 
         if (rs_id == 0 || rs_qty == 0) {
 
@@ -95,7 +92,6 @@ class RsController {
         } else {
            
             await RsMod.update_rms_items(rs_id, parseFloat(p_qty), cost, p_barcode, uom)
-            
         }
 
         response.status(200).send({  })
@@ -209,7 +205,9 @@ class RsController {
                         let comment = ""
 
                         if(rs_action == 1)
+						{
                             itemsHeader.push(row)
+						}
                         let result = await RsMod.post_rs(rs_id, rs_action, comment, this.branchName, user_id)
                         if(!result.status) {
                             await RsMod.saveAuditTrail(user_id, result.message)

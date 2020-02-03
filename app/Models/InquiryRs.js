@@ -145,20 +145,33 @@ class InquiryRs extends Model {
                 if(row.length > 0) {
                     return true
                 } else {
-                    let fileName = `2~${rs_id}.${file.extname}`
-                    let datas = {
-                        trs_id: rs_id,
-                        tname: deliveryName,
-                        tplate_no: plateNumber,
-                        // timage: fileName,
+                    try
+                    {
+                        // let fileName = `2~${rs_id}.${file.extname}`
+                        let datas = {
+                            trs_id: rs_id,
+                            tname: deliveryName,
+                            tplate_no: plateNumber,
+                            // timage: fileName,
+                        }
+                        let row = await trx.insert(datas)
+                                            .into('0_pickup_item')
+                        console.log(row)
+                        if(row) 
+                        {
+                            let row = await trx.table('0_rms_header')
+                                        .andWhere('rs_action', rs_action)
+                                        .whereIn('rs_id', [rs_id])
+                                        .update({picked_up: 1}, {expired_date: ''})
+                            if(row) {
+                                await trx.commit()
+                                return true
+                            }
+                        }
+                            
+                    } catch(Exception) {
+                        console.log(Exception)
                     }
-                    let row = await trx.insert(datas)
-                                        .into('0_pickup_item')
-                    
-                    if(row) 
-                        await trx.commit()
-						return true
-
                     // if(row) {
                     //     let row = await trx.table('0_rms_header')
                     //                     .andWhere('rs_action', rs_action)

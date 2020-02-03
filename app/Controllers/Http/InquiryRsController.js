@@ -97,9 +97,9 @@ class InquiryRsController {
 
     async pickUpItem({ request, response }) {
         let { rs_id, rs_action, deliveryName, plateNumber, user_id } = request.only(['rs_id', 'rs_action', 'deliveryName', 'plateNumber', 'user_id'])
-        let file = request.file('file')
+        // let file = request.file('file')
 
-        let result = await InquiryRs.updateRmsHeader(deliveryName, plateNumber, rs_id, file, user_id, rs_action)
+        let result = await InquiryRs.updateRmsHeader(deliveryName, plateNumber, rs_id, /*file,*/ user_id, rs_action)
 
         if(result) { 
             await InquiryRs.saveAuditTrail(user_id, `Item picked up process by ${user_id}`)
