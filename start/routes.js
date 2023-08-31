@@ -17,11 +17,6 @@
 const Route = use('Route')
 const Env = use('Env')
 
-Route.get('/', () => {
-  return { greeting: 'Hello world in JSON' }
-})
-
-
 Route.group(() => {
   Route.post('/purchaser/receive_po/auth', 'AuthController.auth')
   Route.get('/purchaser/receive_po/logout', 'AuthController.logout')
