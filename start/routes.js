@@ -15,6 +15,7 @@
 
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route')
+const Env = use('Env')
 
 Route.get('/', () => {
   return { greeting: 'Hello world in JSON' }
@@ -44,3 +45,15 @@ Route.group(() => {
   
   Route.get('/system/website/fetch_page_body', 'SystemController.fetch_page_body')
 }).prefix('api')
+
+Route.any('*', function ({ view, request }) {
+     const url = request.protocol() + '://' + request.hostname() + ':' + Env.get('PORT', '')
+     
+     if(request.hostname() === "srsnetwork.dyndns.org") {
+       return view.render('index', { APP_URL: url})
+     } else if (request.hostname() === "192.168.0.204") {
+       return view.render('index', { APP_URL: url })
+     }else {
+       return view.render('index', { APP_URL: Env.get('APP_URL', '')})
+     }
+})
