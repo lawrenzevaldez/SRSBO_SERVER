@@ -6,3 +6,9 @@ tmp
 
 # The development sqlite file
 database/development.sqlite
+
+# Environment variables, never commit this file
+.env
+
+# File folder for printing
+files

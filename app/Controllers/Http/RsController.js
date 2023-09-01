@@ -80,11 +80,12 @@ class RsController {
                 await RsMod.saveAuditTrail(user_id, product_sellingArea[1])
                 throw new CustomException({ message: product_sellingArea[1] }, 401)
             }
-        } else{
-            let description = `${p_barcode} OR ${pos_product[0].description} is currently negative.`
-            await RsMod.saveAuditTrail(user_id, description)
-            throw new CustomException({ message: description }, 401)
-        }
+        } 
+        // else{
+        //     let description = `${p_barcode} OR ${pos_product[0].description} is currently negative.`
+        //     await RsMod.saveAuditTrail(user_id, description)
+        //     throw new CustomException({ message: description }, 401)
+        // }
 
         if (rs_id == 0 || rs_qty == 0) {
 
