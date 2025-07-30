@@ -7,12 +7,4 @@ tmp
 # The development sqlite file
 database/development.sqlite
 
-<<<<<<< HEAD
 public/images
-=======
-# Environment variables, never commit this file
-.env
-
-# File folder for printing
-files
->>>>>>> 5dd32781f3b418bce286071aada135c83bd6f548

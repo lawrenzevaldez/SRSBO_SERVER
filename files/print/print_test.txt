@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 RETURNS and DISPOSAL NOVALICHES
 Return to Supplier Slip 
 No 9990210974
@@ -9,66 +8,6 @@ Product                                 QTY
 -------------------------------------------
                TOTAL QTY: undefined
            TOTAL AMOUNT: 0.00
-=======
-RETURNS and DISPOSAL CARAVAN
-Return to Supplier Slip 
-No 186593
-Supplier: JR & R DISTRIBUTORS INC.(REG)
-Date: 2023/09/01 
-U.COST 
-Product                                 QTY
-CALLA BAR  BLUE 370G                     12 
-227.12
-PC
-CALLABARFLRALFRESH370G                   5 
-103.66
-PC
-CALLAPWDFLORALFRESH100G                  2 
-22.45
-PC
-CALLA PWD KAL MAGIC 100G                 1 
-11.22
-PC
-CALLA PWD ROSEGARDEN 45G                 2 
-64.25
-PC6
-CALLA PWD ROSEGARDEN100G                 4 
-43.12
-PC
-CALLAPWDSUMMERFRESH45G                   4 
-20.53
-PC
-CALLAPWDSUMMERFRESH45G                   1 
-30.80
-PC6
-CALLA PWD SUMMERFRSH100G                 8 
-89.78
-PC
-CALLAPWDRFLORALFRESH45G                  3 
-96.37
-PC6
-CHAMP PWD CITRUSFRSH105G                 3 
-40.89
-PC
-CHAMP PWD SUPRA CLN35G                   1 
-29.44
-PCK6
-CHAMPION BAR FABCON 370G                 1 
-21.62
-PC
-CHAMPION BAR REG SC 370G                 1 
-19.11
-PC
-CHAMPIONPWDRFABCON105G                   1 
-13.63
-PC
-HIGH ENDURANCE FRESH 14G                 1 
-85.63
-PC
--------------------------------------------
-               TOTAL QTY: 50
-           TOTAL AMOUNT: 919.62
->>>>>>> 5dd32781f3b418bce286071aada135c83bd6f548
 -------------------------------------------
 Prepared by:ADMIN PLAIN
 Checked  by:ADMIN PLAIN
