@@ -23,8 +23,9 @@ class RsMod extends Model {
 
     constructor() {
         super()
-        this.Today = moment().format('YYYY-MM-DD');
-        this.TodayTime = moment().format('YYYY-MM-DD HH:mm:ss');
+        this.Today = Db.fn.now();
+        this.TodayTime = moment().format('YYYY-MM-DD HH:mm:ss')
+    	// this.TodayTime = moment().format('YYYY/MM/DD')
 		this.branchCode = Env.get('BRANCH_CODE', '')
 		this.branchName = Env.get('BRANCH_NAME', '')
     }
@@ -37,12 +38,18 @@ class RsMod extends Model {
         return row
     }
 
+    async fetch_list_branch() {
+        let row = await Db.select('code', 'name')
+                          .from('transfers.0_branches')
+        return row
+    }
+
     /**
      * @param {int} productid 
      */
     async fetch_vendor(productid) {
         let row = await Db.connection('srspos')
-                          .select('cost', 'totalcost', 'discountcode1','discountcode2','discountcode3', 'vendorcode', 'qty')
+                          .select('cost', 'totalcost', 'discountcode1','discountcode2','discountcode3', 'vendorcode', 'qty', 'averagenetcost')
                           .from('vendor_products')
                           .where('productid', productid)
                           .andWhere('defa', 1)
@@ -111,7 +118,7 @@ class RsMod extends Model {
      * @param {int} rs_id 
      */
     async fetch_rs_qty_items(barcode, uom,  rs_id) {
-        let row = await Db.select('qty')
+        let row = await Db.select('qty',)
                           .from('0_rms_items')
                           .where('uom', uom)
                           .andWhere('pending', 0)
@@ -132,7 +139,7 @@ class RsMod extends Model {
      * @param {int} qtys 
      * @param {string} user_id 
      */
-    async add_rms_header_and_items(productid, p_barcode, description, uom_, p_qty, cost, vendorcode, o_uom, c_multip, qtys, user_id, rs_id){
+    async add_rms_header_and_items(productid, p_barcode, description, uom_, p_qty, cost, vendorcode, o_uom, c_multip, qtys, user_id, rs_id, p_branch){
        
         let rs_row = await this.fetch_type_rs(vendorcode, p_barcode)
 
@@ -148,7 +155,8 @@ class RsMod extends Model {
             orig_multiplier: qtys,
             custom_multiplier:c_multip,
             loginid: user_id,
-            pending: 0
+            pending: 0,
+            branch: p_branch
         }
 
         let result = await Db.insert(data)
@@ -164,29 +172,19 @@ class RsMod extends Model {
                     rs_date: moment().format(TO_DATE),
                     supplier_code: vendorcode,
                     rs_action: rs_row.ttype,
-					bo_processed_date: moment().format(TO_DATE),
                     created_by: user_id,
-                    supplier_name: vendor_name
+                    supplier_name: vendor_name,
+                    branch: p_branch
                 }
 
                 let result = await Db.insert(data)
                                      .into('0_rms_header')
-                
-                
-                let [roWresult] = await Db.raw('SELECT MAX(rs_id) as rs_id FROM 0_rms_items')
-                let rs_id = roWresult[0].rs_id+1
-                console.log(rs_id)
+                let rs_id = result[0]
                 // update rs_id in rs_items
                 await Db.table('0_rms_items')
                                      .where('rs_id', 0)
                                      .andWhere('supplier_code', vendorcode)
                                      .update('rs_id', rs_id)
-
-                await Db.table('0_rms_header')
-                .where('rs_id', result[0])
-                .andWhere('supplier_code', vendorcode)
-                .andWhere('pending', 0)
-                .update('rs_id', rs_id)
             } else {
                 
                 return await Db.table('0_rms_items')
@@ -293,12 +291,12 @@ class RsMod extends Model {
   		let saOut
   		let area
         let movementNo
-          
+
         if(movementCode == 'R2SSA') {
 
             movementNo = leftPad(await this.getCounter(trx, 'R2SSA'), 10, 0)
             area = 'BO ROOM'
-
+            console.log(movementNo)
             vendorCode = await this.getRsVendorCode(rs_id)
             if(vendorCode != ""){
                 let vendorRow = await this.getVendorDetails(vendorCode)
@@ -340,6 +338,7 @@ class RsMod extends Model {
             vendorCode
         }
 
+
         let productMovement = await this.productMovement(trx, 'first', productData)
 
         if(!productMovement)
@@ -354,7 +353,6 @@ class RsMod extends Model {
         let begDamage, dmgOut
         for(const row of rowItems) {
             let prodRow = await this.getProductRow(trx, row.prod_id)
-            let posProdRow = await this.getPosProductRow(trx, row.barcode)
             let pack = (row.custom_multiplier == 0) ? row.orig_multiplier : row.custom_multiplier
             let pcsQty = (parseFloat(pack) * parseFloat(row.qty)) + 0
 
@@ -377,8 +375,8 @@ class RsMod extends Model {
                 barcode: row.barcode.toString(),
                 transactionid: movementId,
                 transactionno: movementNo.toString(),
-                dateposted: this.TodayTime,
-                transactiondate: this.TodayTime,
+                dateposted: moment().format('YYYY-MM-DD HH:mm:ss'),
+                transactiondate: moment().format('YYYY-MM-DD HH:mm:ss'),
                 description: productHistoryDesc.toString(),
                 beginningsellingarea: begSa,
                 beginningstockroom: 0,
@@ -408,9 +406,10 @@ class RsMod extends Model {
                 BeginningDamaged: begDamage,
                 FlowDamaged: flowDmg
             }
-            await this.addProductHistory(trx, rowProdHistory)
-            await this.addMovementLine(trx, movementId,row.prod_id,posProdRow.ProductCode,row.item_name,row.uom,row.price,row.qty,pack,row.barcode,movementCode)
-            
+            let prodHistory = await this.addProductHistory(trx, rowProdHistory)
+            if(!prodHistory) return false
+            let movementLine = await this.addMovementLine(trx, movementId,row.prod_id,posProdRow.ProductCode,row.item_name,row.uom,row.price,row.qty,pack,row.barcode,movementCode)
+            if(!movementLine) return false
             
             let prodSql
             
@@ -439,7 +438,8 @@ class RsMod extends Model {
                 .update('nettotal', cosTotal)
             }
 
-            await trx.raw(prodSql)
+            let prdSql = await trx.raw(prodSql)
+            if(!prdSql) return false
         }
         console.log("Movement no. " + movementNo)
         return movementNo
@@ -454,6 +454,7 @@ class RsMod extends Model {
             return true
         } catch (Exception) {
             console.log(Exception)
+            return false
         }
     }
 
@@ -483,6 +484,7 @@ class RsMod extends Model {
             return true
         } catch (Exception) {
             console.log(Exception)
+            return false
         }
     }
 
@@ -555,14 +557,14 @@ class RsMod extends Model {
                     ContactPerson : trim(ContactPerson),
                     FromDescription : fromDescription,
                     FromAddress : '',
-                    DateCreated : this.TodayTime,
+                    DateCreated : moment().format('YYYY-MM-DD HH:mm:ss'),
                     LastModifiedBy : '',
-                    LastDateModified : this.TodayTime,
+                    LastDateModified : moment().format('YYYY-MM-DD HH:mm:ss'),
                     Status : '2',
                     PostedBy : currentUser,
-                    PostedDate : this.TodayTime,
+                    PostedDate : moment().format('YYYY-MM-DD HH:mm:ss'),
                     Terms : 0,
-                    TransactionDate : this.TodayTime,
+                    TransactionDate : moment().format('YYYY-MM-DD HH:mm:ss'),
                     FieldStyleCode1 : '',
                     NetTotal : (rowTotal[1]+0).toString(),
                     StatusDescription : 'POSTED',
@@ -665,7 +667,6 @@ class RsMod extends Model {
             let datas = {
                 rs_action: rsAction,
                 processed: 1,
-                comment: trim(comment),
                 pending: 1,
                 bo_processed_date: moment().format(TO_DATE),
                 processed_by: currentUser
@@ -677,12 +678,16 @@ class RsMod extends Model {
                         .update(datas)
             if(row)
             {
-                await trx.table('0_rms_items')
+                let res = await trx.table('0_rms_items')
                                     .whereIn('rs_id', [rowrsId])
                                     .update('pending', 1)
+    
+				if(res) {
+            return true
+				}
             }
     
-            return true
+            return false
         } catch(exception) {
             console.log(exception)
         }
@@ -699,13 +704,12 @@ class RsMod extends Model {
                         .update({'comment': trim(comment), 'rs_action': 0})
 
                         if(!rmsHeader)
-                    throw new CustomException({ message: `Something wrong in updating header rms.` }, 401)
+                            throw new CustomException({ message: `Something wrong in updating header rms.` }, 401)
             }
             else if (rsAction === 1) {
                 let rowTotal = await this.mTotalQty(rowrsId)
                 let codeMovement = 'R2SSA'
                 let movement = await this.msMovement(trx2, rowTotal, rowrsId, codeMovement, branchName, currentUser)
-
                 if(!movement)
                 {
                     throw new CustomException({ message: `Something wrong in MS movement.` }, 401)
@@ -713,6 +717,7 @@ class RsMod extends Model {
 
                 let id = leftPad(movement, 10, 0)
                 let row = await this.movementCounter(trx2, id, codeMovement)
+                console.log(row)
                 if(!row)
                 {
                     throw new CustomException({ message: `Something wrong in MS movement.` }, 401)
@@ -764,7 +769,7 @@ class RsMod extends Model {
         try
         {
             let tip_address =  await internalIp.v4()
-            let tdate_start = this.TodayTime
+            let tdate_start = moment().format('YYYY-MM-DD HH:mm:ss')
             
             let data = {
                 tlogin_id: tlogin_id,
@@ -1041,6 +1046,213 @@ class RsMod extends Model {
 
         return false
     }
+
+    /**  type transfer 
+    *@param {string} vendorcode 
+    */
+    async fetch_transfer_type(vendorcode) {
+        let row = await Db.select('ttype')
+                .from('0_return_type')
+                .where('tsuplier_code', vendorcode)
+           console.log(row.length)
+        return (row.length == 0) ? false : row[0].ttype
+    }
+
+    // DATACOLLECTOR
+    async print_rs_dc(currentName, rsid, copy=0, two_print=false) {
+        try {
+            console.log(currentName)
+            let row = await this.getHeaderRms(rsid)
+			let rsHeaderItems = await this.getDetailsRms(rsid)
+            let supplierName = await this.getSupplierName(row.supplier_code)
+            let date_ = new Date(row.rs_date)
+            let headers = `SA to BO Slip \n` + rsid
+            let copyId = copy
+            let rsType = (row.movement_type == "") ? (row.rs_action == 1) ? "R2SSA" : "FDFB" : row.movement_type
+
+            var obj = {}
+            let movementType
+            let movementNo
+            let rsId
+            let status
+
+            if(rsType == 'R2SSA') {
+                movementType = rsType
+                movementNo = (row.movement_no == 0) ? row.rs_id : row.movement_no
+
+                rsId = await this.getRsIds(movementType, movementNo)
+                rsHeaderItems = await this.getMovementItems(movementType, movementNo)
+                headers = `Return to Supplier Slip \nNo ` + movementNo
+                date_ = new Date(row.bo_processed_date)
+            } else if (rsType == 'FDFB') {
+                movementType = rsType
+                movementNo = (row.movement_no == 0) ? row.rs_id : row.movement_no
+
+                rsId = await this.getRsHeader(rsid)
+                headers = `For Disposal from BO Slip \nNo ` + movementNo
+
+                let movementType_ = (row.movement_type != "") ? true : row.movement_type
+                rsHeaderItems = await this.getMovementItems(movementType, rsId, movementType_)
+                date_ = new Date(row.bo_processed_date)
+            } else {
+                return false
+            }
+
+            status = (row.trans_no == 0) ? status = "to be processed by accounting" : status = "already processed by accounting"
+
+            let rsDate = moment(date_).format('YYYY/MM/DD')
+            let fileSystem = bluebird.promisifyAll(fs)
+
+            let print = Helpers.appRoot()+'\\files'
+
+            if(two_print) {
+                let wsbat = fileSystem.createWriteStream(print+'\\print\\test.bat')
+				wsbat.write('RUNDLL32 PRINTUI.DLL,PrintUIEntry /y /n "%EPSONTM%" \n')
+				wsbat.write('start /min notepad /P '+print+'\\print\\print_test.txt')
+				wsbat.end()
+            }
+
+            let wstream = fileSystem.createWriteStream(print+'\\print\\print_test.txt')
+			let product = `Product                                 QTY\n`
+			let totalQty
+			let qty = 0
+			let totalCost = []
+			let cost = 0
+			let coyname = ['*** Supplier\'s Copy ***','*** Warehouse Copy ***','*** Accounting Copy ***']
+            let line = ""
+            let branchName = this.branchName
+            let details = {}
+            var new_arr = []
+
+			wstream.write(`RETURNS and DISPOSAL ` + branchName.toUpperCase() + '\n')	
+			wstream.write(`${headers}\n`)
+			wstream.write(`Supplier: ${supplierName.toUpperCase()}\n`)
+			wstream.write(`Date: ${rsDate} \n`)
+			wstream.write(`U.COST \n`)
+            wstream.write(product)
+            
+            obj["branchname"] = branchName.toUpperCase()
+            obj["headers"] = headers
+            obj["supplier"] = supplierName.toUpperCase()
+            obj["date"] = rsDate
+
+            _.each(rsHeaderItems, function(rows) {
+				let item = rows.item_name
+				let spacing = product.length - item.length
+
+				qty += rows.qty
+				totalQty = qty
+				cost += parseFloat(rows.qty) * parseFloat(rows.price)
+				totalCost.push(cost)
+
+				if (item.length >= 25) {
+					item = item.replace(/ /g,'')
+					item = item.slice(0,25)
+					spacing = product.length - item.length
+				}
+
+				for (let i = 0; i < spacing - 3; i++) {
+					item += " "
+				}
+
+				item += rows.qty
+				wstream.write(`${item} \n`)
+				wstream.write(accounting.formatMoney(rows.qty*rows.price, "") +`\n`)
+                wstream.write(rows.uom +`\n`)
+                
+                details["product"] = rows.item_name
+                details["qty"] = rows.qty
+                details["cost"] = accounting.formatMoney(rows.qty*rows.price, "")
+                details["uom"] = rows.uom
+
+                new_arr.push(rows)
+            })
+
+            obj["details"] = new_arr
+            
+            for (let x = 0; x < product.length - 1; x++) {
+				line += `-`
+            }
+
+			wstream.write(line+'\n')
+			wstream.write('               TOTAL QTY: ' + totalQty  +`\n`)
+			wstream.write('           TOTAL AMOUNT: ' + accounting.formatMoney(totalCost.slice(-1)[0],"") +'\n')
+			wstream.write(line+'\n')
+			wstream.write('Prepared by:'+ currentName.toUpperCase() +`\n`)
+			wstream.write('Checked  by:'+ currentName.toUpperCase() + `\n`)
+			wstream.write('Received by: \n')
+			wstream.write('___________________________________________\n')
+			wstream.write(`            ${coyname[copyId]} \n`)
+			wstream.end()
+
+            obj["totalQty"] = totalQty
+            obj["totalAmt"] = accounting.formatMoney(totalCost.slice(-1)[0],"")
+            obj["currentName"] = currentName.toUpperCase()
+            obj["coy"] = copyId
+
+			// let bat = spawn('cmd.exe', ['/c', print+'\\print\\test.bat'])
+			// bat.stdout.on('data', (data) => {
+			// 	// console.log(data.toString())
+			// })
+			// bat.stderr.on('data', (data) => {
+			// 	// console.log(data.toString())
+			// })
+			// bat.on('exit', (code) => {
+			// 	// console.log(`Child exited with code ${code}`)
+			// })
+			
+			return obj
+
+        } catch(Exception) {
+            console.log(Exception)
+        }
+    }
+    // ./DATACOLLECTOR
+
+    async manualSellingArea() {
+        const trx = await Db.connection('srspos').beginTransaction()
+
+        let movementCode = 'R2SSA'
+        let rs_id = 9990211008 
+
+        let rowItems = await this.getRmsItemsList(rs_id)
+
+        for(const row of rowItems) {
+            let prodRow = await this.getProductRow(trx, row.prod_id)
+            let posProdRow = await this.getPosProductRow(trx, row.barcode)
+            let pack = (row.custom_multiplier == 0) ? row.orig_multiplier : row.custom_multiplier
+            let pcsQty = (parseFloat(pack) * parseFloat(row.qty)) + 0
+
+            let prodSql
+
+            if(movementCode === 'R2SSA')
+            {
+                let extended =  (row.price * row.qty)
+                let oldStock =  prodRow.StockRoom + prodRow.SellingArea + prodRow.Damaged
+                let oldStockCos = oldStock * prodRow.CostOfSales
+                let newCos = prodRow.CostOfSales
+                
+                if(oldStock-Math.abs(pcsQty) != 0) {
+                    let oldStockCosExt = oldStockCos - extended.toFixed(4)
+                    let newCo = (oldStockCosExt/(oldStock-Math.abs(pcsQty)))
+                    newCos = newCo.toFixed(4)
+                    prodSql = `UPDATE Products SET  SellingArea = SellingArea - ${pcsQty}, CostOfSales =  ${newCos}  WHERE ProductID = ${row.prod_id}`
+                } else {
+                    prodSql = `UPDATE Products SET SellingArea = SellingArea - ${pcsQty} WHERE ProductID = ${row.prod_id}`
+                }
+            }
+            console.log(prodSql)
+        }
+
+        await trx.rollback()
+    }
+
+    // MAX AMOUNT 2000
+    async fetch_rs_total_amount(rs_id, vendor_code) {
+        let [row] = await Db.raw(`SELECT SUM(price*qty) as price FROM 0_rms_items WHERE supplier_code = '${vendor_code}' AND pending = 0 AND rs_id = ${rs_id}`)
+        return (row.length == 0) ? 0 : parseFloat(row[0].price)
+    }
+    // ./ MAX AMOUNT 2000
 
 }
 

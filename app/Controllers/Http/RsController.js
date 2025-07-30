@@ -20,7 +20,7 @@ class RsController {
         //user
         let user_id  = await Redis.get(request.user_id)
         // let user_id = 2019
-        let { p_barcode, p_uom, p_qty } = request.only(['p_barcode', 'p_uom', 'p_qty'])
+        let { p_barcode, p_uom, p_qty, p_branch } = request.only(['p_barcode', 'p_uom', 'p_qty', 'p_branch'])
         
         if (p_barcode == null) {
             throw new CustomException({ message: "Barcode is required" }, 401)
@@ -49,7 +49,37 @@ class RsController {
         
         let vendor      = await RsMod.fetch_vendor(productid)
         let vendor_code = vendor.vendorcode
-        let total_cost  = vendor.totalcost
+        let total_cost  = vendor.averagenetcost
+
+        // DISABLE RS
+        // let rsDis = await RsMod.fetch_type_rs(vendor_code, p_barcode)
+        // if(rsDis.ttype == 1) {
+        //     throw new CustomException({ message: "Return to Supplier is disabled." }, 401)
+        // }
+        // ./DISABLE RS
+
+        // EXCLUDED SUPPLIER
+        let get_vendor_type = await RsMod.fetch_transfer_type(vendor_code)
+        let vendor_checker = await PosProductMod.fetch_exluded_supplier(vendor_code)
+
+        if(get_vendor_type == 1) {
+            //RETURN
+            if (vendor_checker.rs_disable == 1) {
+                throw new CustomException({message: `${vendor_code} items are not allowed to be punched for Return. `}, 401)
+            }else if (vendor_checker.rs_disable == 0 && vendor_checker.bo_disable == 0) {
+                throw new CustomException({message: `${vendor_code} items are not allowed to be punched for Return or Disposal. `}, 401)
+            }
+        } else if(get_vendor_type == 2) {
+            //DISPOSE
+            if (vendor_checker.bo_disable == 1) {
+                throw new CustomException({message: `${vendor_code} items are not allowed to be punched for Disposal. `}, 401)
+            } else if (vendor_checker.rs_disable == 0 && vendor_checker.bo_disable == 0) {
+                throw new CustomException({message: `${vendor_code} items are not allowed to be punched for Return or Disposal. `}, 401)
+            }
+        } else {
+            throw new CustomException({message: `Paki-chat sa operations kung RS or BO yung vendor na ito ${vendor_code}.`}, 401)
+        }
+        // ./EXCLUDED SUPPLIER
 
         if (total_cost <= 0) {
             throw new CustomException({ message: `${p_barcode} OR ${description} unit cost is equal or less than to zero. Kindly inform Audit or ISD Department to proceed scanning of this item` }, 401)
@@ -75,6 +105,14 @@ class RsController {
         let pcsQty     = parseFloat(qtys) * parseFloat(p_qty)
         let product_sellingArea = await PosProductMod.fetch_product_selling_area(productid)
 
+        // // MAX AMOUNT 2000
+        // let rs_total_amount = await RsMod.fetch_rs_total_amount(rs_id, vendor_code)
+        // rs_total_amount = parseFloat(rs_total_amount) + parseFloat(cost*p_qty)
+        // if (rs_total_amount >= 2001) {
+        //     throw new CustomException({message: `The maximum total amount for RS and BO is 2000 pesos only. `}, 401)
+        // }
+        // // ./ MAX AMOUNT 2000
+
         if(pcsQty <= product_sellingArea[0].SellingArea) {
             if(!product_sellingArea[0]) {
                 await RsMod.saveAuditTrail(user_id, product_sellingArea[1])
@@ -88,7 +126,7 @@ class RsController {
 
         if (rs_id == 0 || rs_qty == 0) {
 
-            await RsMod.add_rms_header_and_items(productid, p_barcode, description, uom, p_qty, cost, vendor_code, o_uom, c_multip, qtys, user_id, rs_id)
+            await RsMod.add_rms_header_and_items(productid, p_barcode, description, uom, p_qty, cost, vendor_code, o_uom, c_multip, qtys, user_id, rs_id, p_branch)
         } else {
            
             await RsMod.update_rms_items(rs_id, parseFloat(p_qty), cost, p_barcode, uom)
@@ -102,6 +140,13 @@ class RsController {
         let uom = await RsMod.fetch_list_uom()
 
         response.status(200).send({ uom })
+    }
+
+    async fetch_list_branch({ request, response }) {
+
+        let branch = await RsMod.fetch_list_branch()
+
+        response.status(200).send({ branch })
     }
 
     async fetch_rms_items({ request, response }) {
@@ -217,7 +262,7 @@ class RsController {
                             movementId = movement_id
 
                             await RsMod.saveAuditTrail(user_id, movementId)
-                            await RsMod.print_rs(user_fullname, rs_id, 0, true)
+                            //await RsMod.print_rs(user_fullname, rs_id, 0, true)
                         }
                     }
                 }
@@ -234,6 +279,69 @@ class RsController {
 
     async login ({ auth, request }) {
         console.log(request.all())
+    }
+
+    // DATACOLLECTOR
+    async post_rs_dc({ request, response })
+    {
+        try
+        {
+            let { vendor_list, user_id, user_fullname } = request.only(['vendor_list', 'user_id', 'user_fullname'])
+            let itemsHeader = []
+            let movementId
+            let result2
+            let vendor_array = _.uniqBy(vendor_list)
+            let invalid_barcode_counter = 0
+
+            let rowRms = await RsMod.getRmsHeader(vendor_array)
+            if(!rowRms)
+            {
+                throw new CustomException({ message: `Something wrong in fetching header rms please refresh and try again.` }, 401)
+            }
+            let rs_list = []
+
+            if(invalid_barcode_counter == 0)
+            {
+                for(const row of rowRms)
+                {
+                    // console.log(row.rs_id)
+                    if(row.rs_action !== 0 && row.supplier_peding !== 1)
+                    {
+                        let rs_id = row.rs_id
+                        let rs_action = row.rs_action
+                        let comment = ""
+
+                        if(rs_action == 1)
+						{
+                            itemsHeader.push(row)
+						}
+                        let result = await RsMod.post_rs(rs_id, rs_action, comment, this.branchName, user_id)
+                        if(!result.status) {
+                            await RsMod.saveAuditTrail(user_id, result.message)
+                            throw new CustomException({ message: result.message }, 401)
+                        } else {
+                            let movement_id = await RsMod.rsNoList(rs_id)
+                            movementId = movement_id
+
+                            await RsMod.saveAuditTrail(user_id, movementId)
+                            result2 = await RsMod.print_rs_dc(user_fullname, rs_id, 0, true)
+                        }
+                    }
+                }
+
+                response.status(200).send({ movementId: movementId, forprint: result2 })
+                
+            } else {
+                throw new CustomException({ message: response }, 401)
+            }
+        } catch(Exception) {
+            console.log(Exception)
+        }
+    }
+    // ./DATACOLLECTOR
+
+    async manualSellingArea() {
+        await RsMod.manualSellingArea()
     }
 }
 

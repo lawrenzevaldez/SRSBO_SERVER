@@ -51,6 +51,22 @@ class PosProduct extends Model {
         return (row.length == 0) ? '' : row[0]
     }
 
+    // CHECK IF SUPPLIER IS EXCLUDED
+    async fetch_exluded_supplier(vendor_code) {
+        let row = await Db.select('*')
+                        .from('0_rms_exluded_supplier')
+                        .where('supplier_code', vendor_code)
+        await Db.close()
+        return (row.length == 0) ? '' : row[0]
+    }
+
+    async fetch_transfer_type(vendorcode) {
+        let row = await Db.select('ttype')
+                .from('0_return_type')
+                .where('tsuplier_code', vendorcode)
+        return (row.length == 0) ? false : row[0].ttype
+    }
+
 }
 
 module.exports = new PosProduct

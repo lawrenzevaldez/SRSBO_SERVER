@@ -1,28 +1,16 @@
-RETURNS and DISPOSAL NAVOTAS
+RETURNS and DISPOSAL NOVALICHES
 Return to Supplier Slip 
-No 38425
-Supplier: FULL BACK UP TRADING CORP (CHAMPION)
-Date: 2020/01/13 
+No 9990210974
+Supplier: FAST DISTRIBUTION CORPORATION (NESTLE)
+Date: 1970/01/01 
 U.COST 
 Product                                 QTY
-CALLAPWDFLORALFRESH100G                  8 
-74.95
-PC
-CALLAPWDRFLORALFRESH45G                  6 
-26.48
-PC
-CHAMPION PWDR REG 120G                   4 
-49.55
-PC
-CHAMPION PWDR SFRESH120G                 1 
-12.39
-PC
 -------------------------------------------
-               TOTAL QTY: 19
-           TOTAL AMOUNT: 163.38
+               TOTAL QTY: undefined
+           TOTAL AMOUNT: 0.00
 -------------------------------------------
-Prepared by:ARIS LACHICA
-Checked  by:ARIS LACHICA
+Prepared by:ADMIN PLAIN
+Checked  by:ADMIN PLAIN
 Received by: 
 ___________________________________________
-            *** Warehouse Copy *** 
+            *** Supplier's Copy *** 
