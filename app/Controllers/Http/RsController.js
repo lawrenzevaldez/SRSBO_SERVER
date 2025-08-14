@@ -342,7 +342,7 @@ class RsController {
               rs_id,
               rs_action,
               comment,
-              this.branchName,
+              // this.branchName,
               user_id
             );
             if (!result.status) {
@@ -353,7 +353,7 @@ class RsController {
               movementId = movement_id;
 
               await RsMod.saveAuditTrail(user_id, movementId);
-              //await RsMod.print_rs(user_fullname, rs_id, 0, true)
+              await RsMod.print_rs(user_fullname, rs_id, 0, true);
             }
           }
         }
