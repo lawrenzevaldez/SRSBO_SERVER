@@ -167,8 +167,8 @@ class RsMod extends Model {
     c_multip,
     qtys,
     user_id,
-    rs_id,
-    p_branch
+    rs_id /*,
+    p_branch*/
   ) {
     let rs_row = await this.fetch_type_rs(vendorcode, p_barcode);
 
@@ -185,7 +185,7 @@ class RsMod extends Model {
       custom_multiplier: c_multip,
       loginid: user_id,
       pending: 0,
-      branch: p_branch,
+      /*branch: p_branch,*/
     };
 
     let result = await Db.insert(data).into("0_rms_items");
@@ -201,7 +201,7 @@ class RsMod extends Model {
           rs_action: rs_row.ttype,
           created_by: user_id,
           supplier_name: vendor_name,
-          branch: p_branch,
+          /*branch: p_branch,*/
         };
 
         let result = await Db.insert(data).into("0_rms_header");
@@ -331,7 +331,7 @@ class RsMod extends Model {
     rowTotal,
     rs_id,
     movementCode,
-    branchName,
+    /*branchName,*/
     currentUser
   ) {
     let vendorCode = "";
@@ -380,7 +380,7 @@ class RsMod extends Model {
     }
 
     let fromDescription =
-      `SAN ROQUE SUPERMARKET ${branchName.toUpperCase()}` + area;
+      `SAN ROQUE SUPERMARKET ${this.branchName.toUpperCase()}` + area;
     let productData = {
       movementNo,
       movementCode,
@@ -799,7 +799,7 @@ class RsMod extends Model {
           rowTotal,
           rowrsId,
           codeMovement,
-          branchName,
+          //   branchName,
           currentUser
         );
         if (!movement) {
