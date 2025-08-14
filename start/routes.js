@@ -61,7 +61,7 @@ Route.group(() => {
   Route.post(
     "/purchaser/inquiry_rs/pickUpItem",
     "InquiryRsController.pickUpItem"
-  ).middleware(["checkUser"]);
+  );
   Route.post(
     "/purchaser/inquiry_rs/pickUpItemBulk",
     "InquiryRsController.pickUpItemBulk"

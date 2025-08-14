@@ -130,14 +130,13 @@ class InquiryRsController {
     let { rs_id, rs_action, deliveryName, plateNumber, user_id } = request.only(
       ["rs_id", "rs_action", "deliveryName", "plateNumber", "user_id"]
     );
-    let file = request.file("file");
+    // let file = request.file('file')
 
     let result = await InquiryRs.updateRmsHeader(
       deliveryName,
       plateNumber,
       rs_id,
-      file,
-      user_id,
+      /*file,*/ user_id,
       rs_action
     );
 
@@ -213,22 +212,18 @@ class InquiryRsController {
         user_id,
         `RS ID# ${rs_id} picked up process by ${user_id}`
       );
-      response
-        .status(200)
-        .send({
-          status:
-            "Successfully picked up an item. You will be redirected after 3 seconds!",
-        });
+      response.status(200).send({
+        status:
+          "Successfully picked up an item. You will be redirected after 3 seconds!",
+      });
     } else {
       await InquiryRs.saveAuditTrail(
         user_id,
         "An error has occured in server. Please try again!"
       );
-      response
-        .status(401)
-        .send({
-          status: '"An error has occured in server. Please try again!"',
-        });
+      response.status(401).send({
+        status: '"An error has occured in server. Please try again!"',
+      });
     }
   }
 
@@ -303,11 +298,9 @@ class InquiryRsController {
     );
 
     if (result) {
-      response
-        .status(200)
-        .send({
-          status: `Successfully added RS Slip attachment for RS#${rs_id}`,
-        });
+      response.status(200).send({
+        status: `Successfully added RS Slip attachment for RS#${rs_id}`,
+      });
     } else {
       await InquiryRs.saveAuditTrail(
         user_id,
@@ -339,11 +332,9 @@ class InquiryRsController {
     );
 
     if (result) {
-      response
-        .status(200)
-        .send({
-          status: `Successfully added Actual RS attachment for RS#${rs_id}`,
-        });
+      response.status(200).send({
+        status: `Successfully added Actual RS attachment for RS#${rs_id}`,
+      });
     } else {
       await InquiryRs.saveAuditTrail(
         user_id,

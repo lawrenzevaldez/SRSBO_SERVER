@@ -133,8 +133,7 @@ class InquiryRs extends Model {
     deliveryName,
     plateNumber,
     rs_id,
-    file,
-    currentUser,
+    /*file,*/ currentUser,
     rs_action
   ) {
     const trx = await Db.beginTransaction();
@@ -142,7 +141,7 @@ class InquiryRs extends Model {
       if (rs_action == 2) {
         let datas = {
           movement_type: "FDFB",
-          bo_processed_date: this.Today,
+          bo_processed_date: moment().format(TO_DATE),
           processed: "1",
           processed_by: "2",
           pending: "1",
@@ -166,34 +165,49 @@ class InquiryRs extends Model {
         if (row.length > 0) {
           return true;
         } else {
-          let fileName = `2~${rs_id}.${file.extname}`;
-          let datas = {
-            trs_id: rs_id,
-            tname: deliveryName,
-            tplate_no: plateNumber,
-            timage: fileName,
-          };
-          let row = await trx.insert(datas).into("0_pickup_item");
-          if (row) {
-            let row = await trx
-              .table("0_rms_header")
-              .andWhere("rs_action", rs_action)
-              .whereIn("rs_id", [rs_id])
-              .update({ picked_up: 1 }, { expired_date: 1 });
+          try {
+            // let fileName = `2~${rs_id}.${file.extname}`
+            let datas = {
+              trs_id: rs_id,
+              tname: deliveryName,
+              tplate_no: plateNumber,
+              // timage: fileName,
+            };
+            let row = await trx.insert(datas).into("0_pickup_item");
+            console.log(row);
             if (row) {
-              await file.move(Helpers.publicPath("images/uploads"), {
-                name: fileName,
-                overwrite: true,
-              });
-
-              if (file.moved()) {
+              let row = await trx
+                .table("0_rms_header")
+                .andWhere("rs_action", rs_action)
+                .whereIn("rs_id", [rs_id])
+                .update({ picked_up: 1 }, { expired_date: "" });
+              if (row) {
                 await trx.commit();
                 return true;
-              } else {
-                return file.error();
               }
             }
+          } catch (Exception) {
+            console.log(Exception);
           }
+          // if(row) {
+          //     let row = await trx.table('0_rms_header')
+          //                     .andWhere('rs_action', rs_action)
+          //                     .whereIn('rs_id', [rs_id])
+          //                     .update({picked_up: 1}, {expired_date: 1})
+          //     if(row) {
+          //         await file.move(Helpers.publicPath('images/uploads'), {
+          //             name: fileName,
+          //             overwrite: true
+          //         })
+
+          //         if(file.moved()) {
+          //             await trx.commit()
+          //             return true
+          //         } else {
+          //             return file.error()
+          //         }
+          //     }
+          // }
         }
       }
     } catch (Exception) {
