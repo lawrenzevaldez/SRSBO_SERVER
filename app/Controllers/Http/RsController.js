@@ -329,7 +329,7 @@ class RsController {
 
       if (invalid_barcode_counter == 0) {
         for (const row of rowRms) {
-          // console.log(row.rs_id)
+          console.log(row.rs_id);
           if (row.rs_action !== 0 && row.supplier_peding !== 1) {
             let rs_id = row.rs_id;
             let rs_action = row.rs_action;
@@ -342,9 +342,10 @@ class RsController {
               rs_id,
               rs_action,
               comment,
-              // this.branchName,
+              this.branchName,
               user_id
             );
+            // console.log("result " + result.status);
             if (!result.status) {
               await RsMod.saveAuditTrail(user_id, result.message);
               throw new CustomException({ message: result.message }, 401);

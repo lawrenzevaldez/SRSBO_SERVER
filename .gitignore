@@ -7,6 +7,8 @@ node_modules
 # Adonis directory for storing tmp files
 tmp
 
+files
+
 # The development sqlite file
 database/development.sqlite
 

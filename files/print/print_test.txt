@@ -1,13 +1,16 @@
-RETURNS and DISPOSAL NOVALICHES
+RETURNS and DISPOSAL CARAVAN
 Return to Supplier Slip 
-No 9990210974
-Supplier: FAST DISTRIBUTION CORPORATION (NESTLE)
-Date: 1970/01/01 
+No 8720
+Supplier: REGENT FOODS CORPORATION
+Date: 2025/08/19 
 U.COST 
 Product                                 QTY
+CHEESE RING 25GX30                       1 
+6.32
+PC
 -------------------------------------------
-               TOTAL QTY: undefined
-           TOTAL AMOUNT: 0.00
+               TOTAL QTY: 1
+           TOTAL AMOUNT: 6.32
 -------------------------------------------
 Prepared by:ADMIN PLAIN
 Checked  by:ADMIN PLAIN

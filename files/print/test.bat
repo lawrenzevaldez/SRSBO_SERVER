@@ -1,2 +1,2 @@
 RUNDLL32 PRINTUI.DLL,PrintUIEntry /y /n "%EPSONTM%" 
-start /min notepad /P C:\Users\Lawrenze\Desktop\DESKTOP\BO FOR DEPLOYMENT\SRSBO_SERVER\files\print\print_test.txt
+start /min notepad /P C:\node_project\srs_bo\files\print\print_test.txt

@@ -331,7 +331,7 @@ class RsMod extends Model {
     rowTotal,
     rs_id,
     movementCode,
-    /*branchName,*/
+    branchName,
     currentUser
   ) {
     let vendorCode = "";
@@ -351,7 +351,7 @@ class RsMod extends Model {
     if (movementCode == "R2SSA") {
       movementNo = leftPad(await this.getCounter(trx, "R2SSA"), 10, 0);
       area = "BO ROOM";
-      console.log(movementNo);
+      // console.log("movement_no: " + movementNo);
       vendorCode = await this.getRsVendorCode(rs_id);
       if (vendorCode != "") {
         let vendorRow = await this.getVendorDetails(vendorCode);
@@ -380,7 +380,7 @@ class RsMod extends Model {
     }
 
     let fromDescription =
-      `SAN ROQUE SUPERMARKET ${this.branchName.toUpperCase()}` + area;
+      `SAN ROQUE SUPERMARKET ${branchName.toUpperCase()}` + area;
     let productData = {
       movementNo,
       movementCode,
@@ -395,9 +395,12 @@ class RsMod extends Model {
 
     let productMovement = await this.productMovement(trx, "first", productData);
 
+    // console.log("productMovement " + productMovement);
+
     if (!productMovement) return false;
 
     let movementId = await this.getMovementId(trx);
+    // console.log("movementId 403 :" + movementId);
     if (!movementId) return false;
 
     let rowItems = await this.getRmsItemsList(rs_id);
@@ -405,6 +408,7 @@ class RsMod extends Model {
     let begDamage, dmgOut;
     for (const row of rowItems) {
       let prodRow = await this.getProductRow(trx, row.prod_id);
+      let posProdRow = await this.getPosProductRow(trx, row.barcode);
       let pack =
         row.custom_multiplier == 0
           ? row.orig_multiplier
@@ -505,8 +509,7 @@ class RsMod extends Model {
           .update("nettotal", cosTotal);
       }
 
-      let prdSql = await trx.raw(prodSql);
-      if (!prdSql) return false;
+      await trx.raw(prodSql);
     }
     console.log("Movement no. " + movementNo);
     return movementNo;
@@ -776,7 +779,7 @@ class RsMod extends Model {
     }
   }
 
-  async post_rs(rowrsId, rsAction, comment, /*branchName,*/ currentUser) {
+  async post_rs(rowrsId, rsAction, comment, branchName, currentUser) {
     const trx = await Db.beginTransaction();
     const trx2 = await Db.connection("srspos").beginTransaction();
     try {
@@ -793,15 +796,17 @@ class RsMod extends Model {
           );
       } else if (rsAction === 1) {
         let rowTotal = await this.mTotalQty(rowrsId);
+        // console.log("totalQty: " + rowTotal);
         let codeMovement = "R2SSA";
         let movement = await this.msMovement(
           trx2,
           rowTotal,
           rowrsId,
           codeMovement,
-          //   branchName,
+          branchName,
           currentUser
         );
+        // console.log("movement " + movement);
         if (!movement) {
           throw new CustomException(
             { message: `Something wrong in MS movement.` },
@@ -810,14 +815,15 @@ class RsMod extends Model {
         }
 
         let id = leftPad(movement, 10, 0);
+        // console.log("leftpad: " + id);
         let row = await this.movementCounter(trx2, id, codeMovement);
-        console.log(row);
         if (!row) {
           throw new CustomException(
             { message: `Something wrong in MS movement.` },
             401
           );
         }
+        // console.log("counters: " + row[0].counters);
         if (row[0].counters != 0) {
           let resRms = await this.updateRms(
             trx,
@@ -828,6 +834,7 @@ class RsMod extends Model {
             rowrsId,
             codeMovement
           );
+          // console.log("resRms: " + resRms);
           if (!resRms) {
             throw new CustomException(
               {
