@@ -162,14 +162,6 @@ class InquiryRs extends Model {
         await trx.commit();
         return true;
       } else {
-        console.log("DEBUG:", { rs_id, rs_action });
-        const checkExists = await trx("0_rms_header")
-          .where("rs_action", rs_action)
-          .andWhere("rs_id", rs_id)
-          .first();
-
-        console.log("Record to update:", checkExists);
-
         let row = await Db.select("trs_id")
           .from("0_pickup_item")
           .where("trs_id", rs_id);
@@ -193,7 +185,7 @@ class InquiryRs extends Model {
               .table("0_rms_header")
               .andWhere("rs_action", rs_action)
               .whereIn("rs_id", [rs_id])
-              .update({ picked_up: 1, expired_date: "" });
+              .update({ picked_up: 1, expired_date: null });
             if (rows > 0) {
               await trx.commit();
               return true;
