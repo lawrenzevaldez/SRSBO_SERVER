@@ -180,13 +180,13 @@ class InquiryRs extends Model {
           };
           let row = await trx.insert(datas).into("0_pickup_item");
           console.log(row);
-          if (row || row.length >= 0) {
-            let rows = await trx
+          if (row) {
+            let row = await trx
               .table("0_rms_header")
               .andWhere("rs_action", rs_action)
               .whereIn("rs_id", [rs_id])
-              .update({ picked_up: 1, expired_date: null });
-            if (rows > 0) {
+              .update({ picked_up: 1 }, { expired_date: "" });
+            if (row) {
               await trx.commit();
               return true;
             }
