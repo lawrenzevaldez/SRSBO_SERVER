@@ -162,6 +162,14 @@ class InquiryRs extends Model {
         await trx.commit();
         return true;
       } else {
+        console.log("DEBUG:", { rs_id, rs_action });
+        const checkExists = await trx("0_rms_header")
+          .where("rs_action", rs_action)
+          .andWhere("rs_id", rs_id)
+          .first();
+
+        console.log("Record to update:", checkExists);
+
         let row = await Db.select("trs_id")
           .from("0_pickup_item")
           .where("trs_id", rs_id);
